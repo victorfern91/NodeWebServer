@@ -25,13 +25,14 @@ var httpServer = require("http"),
 var webServer = function () {
     httpServer.createServer(function (req, res) {
         var request = url.parse(req.url).pathname;
-        var fullPath = path.join(serverConfig.path, request);
 
         if (request === '/') {
             request += 'index.html';
         }
 
-        fileReader.readFile(fullPath, "binary", function (err, file) {
+        var requestedFile = path.join(serverConfig.path, request);
+
+        fileReader.readFile(requestedFile, "binary", function (err, file) {
             if (err) {
                 res.writeHeader(500, {
                     "Content-Type": "text/plain"
@@ -39,7 +40,7 @@ var webServer = function () {
                 res.write(err + "\n");
                 res.end();
             } else {
-                var contentType = contentTypes[path.extname(fullPath)];
+                var contentType = contentTypes[path.extname(requestedFile)];
                 headers['Content-Type'] = contentType;
                 res.writeHead(200, headers); // HTTP "OK" Response
                 res.write(file, "binary");
@@ -47,7 +48,7 @@ var webServer = function () {
             }
         });
         if (debugMode) {
-            console.log("Remote connection from: " + req.connection.remoteAddress + " requesting file " + fullPath);
+            console.log("Remote connection from: " + req.connection.remoteAddress + " requesting file " + requestedFile);
         }
     }).listen(serverConfig.port);
     console.log("Node Webserver running at port", serverConfig.port);
