@@ -64,7 +64,7 @@ if (require.main === module) {
             serverConfig.port = input[i + 1];
         } else if (input[i] === '-d') {
             serverConfig.path = input[i + 1];
-        } else if (input[i] === '--debug') {
+        } else if (input[i] === '--verbose') {
             debugMode = true;
         } else if (input[i] === '--enable_cors') {
             headers["Access-Control-Allow-Origin"] = "*";
@@ -80,7 +80,8 @@ if (require.main === module) {
 //Catch Server Error
 process.on('uncaughtException', function (err) {
     console.log('Was founded an error! Do you have any service running at port ' + serverConfig.port + '?');
-    console.log('Node Webserver usage : node webserver.js -d <WebServer Directory> -p <Port> -debug');
+    console.log('Node Webserver usage : node webserver.js -d <WebServer Directory> -p <Port> ');
     console.log('                  or   node webserver.js -f <Configuration File>');
+    console.log('Additional functionalities : --verbose, --enable_cors ');
     console.log(err);
 });
