@@ -1,6 +1,6 @@
 {
 	"port": "8080",
-	"directory": "../backbone_and_react",
+	"directory": "./htdocs",
 	"verboseMode": "true",
 	"cors": "true"
 }
