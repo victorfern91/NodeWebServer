@@ -3,36 +3,65 @@
 var httpServer = require("http"),
     path = require("path"),
     url = require("url"),
-    fileReader = require("fs"),
-    debugMode = false,
-    contentTypes = {
+    fs = require("fs"),
+    instance = null;
+
+var WebServer = function (configuration) {
+    this.contentTypes = {
         '.txt': 'text/plain',
         '.html': 'text/html',
         '.css': "text/css",
         '.js': 'application/javascript',
         '.png': 'image/png',
-        //font types Content Type
         '.woff': 'font/woff',
         '.ttf': 'font/ttf',
         '.eot': 'font/eot'
-    },
-    serverConfig = {
-        'port': '81',
-        'path': '..\\htdocs'
-    },
-    headers = {};
+    };
+    this.config = configuration || {
+        port: null,
+        directory: null,
+        verboseMode: false,
+        cors: false
+    };
+    this.headers = {};
 
-var webServer = function () {
+    return this;
+};
+
+WebServer.prototype.enableCORS = function () {
+    this.headers['Access-Control-Allow-Origin'] = '*';
+    this.headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS';
+    this.headers['Access-Control-Allow-Credentials'] = false;
+    this.headers['Access-Control-Max-Age'] = '86400'; // 24 hours
+    this.headers['Access-Control-Allow-Headers'] = 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept';
+};
+
+WebServer.prototype.getPort = function () {
+    return this.config.port;
+};
+
+WebServer.prototype.log = function (message) {
+    if (this.config.verboseMode) {
+        console.log(message);
+    }
+};
+
+WebServer.prototype.start = function () {
+    var self = this;
+    self.log('Server configuration : \n' + JSON.stringify(this.config));
+    if (this.config.cors) {
+        this.enableCORS();
+    }
     httpServer.createServer(function (req, res) {
         var request = url.parse(req.url).pathname;
 
-        if (request === '/') {
+        if (request === '/' || request.slice(-1) === '/') {
             request += 'index.html';
         }
 
-        var requestedFile = path.join(serverConfig.path, request);
+        var requestedFile = path.join(self.config.directory, request);
 
-        fileReader.readFile(requestedFile, "binary", function (err, file) {
+        fs.readFile(requestedFile, "binary", function (err, file) {
             if (err) {
                 res.writeHeader(500, {
                     "Content-Type": "text/plain"
@@ -40,49 +69,48 @@ var webServer = function () {
                 res.write(err + "\n");
                 res.end();
             } else {
-                var contentType = contentTypes[path.extname(requestedFile)];
-                headers['Content-Type'] = contentType;
-                res.writeHead(200, headers); // HTTP "OK" Response
+                var contentType = self.contentTypes[path.extname(requestedFile)];
+                self.headers['Content-Type'] = contentType;
+                res.writeHead(200, self.headers); // HTTP "OK" Response
                 res.write(file, "binary");
                 res.end();
             }
         });
-        if (debugMode) {
-            console.log("Remote connection from: " + req.connection.remoteAddress + " requesting file " + requestedFile);
-        }
-    }).listen(serverConfig.port);
-    console.log("Node Webserver running at port", serverConfig.port);
+        self.log("Remote connection from: " + req.connection.remoteAddress + " requesting file " + requestedFile);
+    }).listen(self.config.port, function () {
+        console.log("Node Webserver running at port", self.config.port);
+    });
 };
 
 if (require.main === module) {
     var input = process.argv;
-    var i, length, fileInfo;
+    var i, length, fileInfo, configuration = {};
     for (i = 2, length = input.length; i < length; i++) {
         if (input[i] === '-f') {
-            fileInfo = fileReader.readFileSync(input[i + 1], 'utf8');
-            serverConfig = JSON.parse(fileInfo);
+            fileInfo = fs.readFileSync(input[i + 1], 'utf8');
+            configuration = JSON.parse(fileInfo);
         } else if (input[i] === '-p') {
-            serverConfig.port = input[i + 1];
+            configuration.port = input[i + 1];
         } else if (input[i] === '-d') {
-            serverConfig.path = input[i + 1];
+            configuration.directory = input[i + 1];
         } else if (input[i] === '--verbose') {
-            debugMode = true;
-        } else if (input[i] === '--enable_cors') {
-            headers["Access-Control-Allow-Origin"] = "*";
-            headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
-            headers["Access-Control-Allow-Credentials"] = false;
-            headers["Access-Control-Max-Age"] = '86400'; // 24 hours
-            headers["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+            configuration.verboseMode = true;
+        } else if (input[i] === '--enable_cors' || configuration.cors === true) {
+            configuration.cors = true;
         }
     }
-    webServer();
+    if (input.length < 3) {
+        console.log('Node Webserver usage : node webserver.js -d <WebServer Directory> -p <Port> ');
+        console.log('                  or   node webserver.js -f <Configuration File>');
+        console.log('Additional functionalities : --verbose, --enable_cors ');
+    } else {
+        instance = new WebServer(configuration);
+        instance.start();
+    }
 }
 
 //Catch Server Error
 process.on('uncaughtException', function (err) {
-    console.log('Was founded an error! Do you have any service running at port ' + serverConfig.port + '?');
-    console.log('Node Webserver usage : node webserver.js -d <WebServer Directory> -p <Port> ');
-    console.log('                  or   node webserver.js -f <Configuration File>');
-    console.log('Additional functionalities : --verbose, --enable_cors ');
+    console.log('Was founded an error! Do you have any service running at port ' + instance.getPort() + '?');
     console.log(err);
 });
