@@ -48,8 +48,8 @@ WebServer.prototype.log = function (message) {
 
 WebServer.prototype.start = function () {
     var self = this;
-    self.log('Server configuration : \n' + JSON.stringify(this.config));
-    if (this.config.cors) {
+    self.log('Server configuration : \n' + JSON.stringify(self.config));
+    if (self.config.cors) {
         this.enableCORS();
     }
     httpServer.createServer(function (req, res) {
@@ -60,6 +60,10 @@ WebServer.prototype.start = function () {
         }
 
         var requestedFile = path.join(self.config.directory, request);
+
+        if (request.search('favicon.ico') !== -1) {
+            requestedFile = fs.existsSync(requestedFile) ? requestedFile : process.argv[1].replace('webserver.js', 'favicon.ico');
+        }
 
         fs.readFile(requestedFile, "binary", function (err, file) {
             if (err) {
