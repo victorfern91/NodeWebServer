@@ -1,9 +1,9 @@
 # NodeWebServer
 ### WebServer based in NodeJS without npm dependencies.
 
-During a normal work day I'm always using a web server and sometimes I need run multiple web servers in different directories and ports.
+During a normal work day, I'm always using a web server and sometimes I need to be run multiple web servers in different directories and ports.
 
-As I don't like to install and configure apache in my machine, I've created this tiny web server in order to be simple to call it from command line and be the simpler as possible integrate it in bash/batch scripts, etc.
+As I don't like to install and configure apache on my machine, I've created this tiny web server in order to simply call it from the command line and be easily integrate it in bash/batch scripts, etc.
 
 ```bash
 node webserver.js -p 80 -d ./htdocs
