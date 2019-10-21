@@ -16,7 +16,8 @@ var WebServer = function (configuration) {
         '.woff': 'font/woff',
         '.ttf': 'font/ttf',
         '.eot': 'font/eot',
-        '.svg': 'image/svg+xml'
+        '.svg': 'image/svg+xml',
+        '.json': 'application/json'
     };
     this.config = configuration || {
         port: null,
